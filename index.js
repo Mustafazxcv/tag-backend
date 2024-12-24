@@ -12,6 +12,10 @@ const billingAddressRoutes = require('./routes/billingAddressRoutes');
 const communicationRoutes = require('./routes/communicationRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const balanceRoutes = require('./routes/balanceRoutes');
+const scooterRoutes = require('./routes/scooterRoutes');
+const rentalsScooter = require('./routes/rentalRoutes');
+const incrementTag = require('./routes/incrementRoutes');
+const functions = require('./routes/functionRoutes');
 
 const app = express();
 
@@ -28,6 +32,7 @@ app.use(cors({
   methods: 'GET,PUT,POST,DELETE',
   credentials: true,
 }));
+
 app.use(limiter); 
 app.use(helmet()); 
 
@@ -39,6 +44,10 @@ app.use('/api/billing-addresses', billingAddressRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/balance', balanceRoutes);
+app.use('/api/scooters', scooterRoutes);
+app.use('/api/rentals', rentalsScooter);
+app.use('/api/increment', incrementTag);
+app.use('/api/function', functions);
 
 const ipAddress = process.env.IP_ADDRESS; 
 const port = process.env.PORT; 
