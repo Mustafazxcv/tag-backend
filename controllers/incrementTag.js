@@ -46,6 +46,28 @@ const incrementTagByLocation = async (req, res) => {
   }
 };
 
+const getAllTags = async (req, res) => {
+  try {
+    // Tüm konum ve tag_count kayıtlarını al
+    const result = await pool.query('SELECT * FROM location_tags');
+
+    if (result.rows.length === 0) {
+      return res.status(404).send({
+        message: 'Herhangi bir konum kaydı bulunamadı.',
+      });
+    }
+
+    res.status(200).send({
+      message: 'Konumlar başarıyla getirildi.',
+      records: result.rows,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Konumları getirme sırasında bir hata oluştu.');
+  }
+};
+
 module.exports = {
   incrementTagByLocation,
+  getAllTags,
 };

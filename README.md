@@ -20,6 +20,16 @@ Olası Hatalar:
 400: Telefon numarası gönderilmedi.
 
 
+
+"first_name": "Ali",
+  "last_name": "Veli",
+  "birth_date": "1990-01-01",
+  "email": "ali.veli@example.com"
+
+
+
+
+
 # Kullanıcı Giriş Fonksiyonu
 
 HTTP Metodu: POST
