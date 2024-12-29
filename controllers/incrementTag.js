@@ -11,14 +11,13 @@ const incrementTagByLocation = async (req, res) => {
   }
 
   try {
-    // Konumun var olup olmadığını kontrol et
+
     const result = await pool.query(
       'SELECT * FROM location_tags WHERE latitude = $1 AND longitude = $2',
       [latitude, longitude]
     );
 
     if (result.rows.length === 0) {
-      // Kayıt yoksa yeni bir kayıt oluştur
       const insertResult = await pool.query(
         'INSERT INTO location_tags (latitude, longitude, tag_count) VALUES ($1, $2, $3) RETURNING *',
         [latitude, longitude, 1]
@@ -30,7 +29,6 @@ const incrementTagByLocation = async (req, res) => {
       });
     }
 
-    // Kayıt varsa tag_count artır
     const updateResult = await pool.query(
       'UPDATE location_tags SET tag_count = tag_count + 1 WHERE latitude = $1 AND longitude = $2 RETURNING *',
       [latitude, longitude]
@@ -48,7 +46,7 @@ const incrementTagByLocation = async (req, res) => {
 
 const getAllTags = async (req, res) => {
   try {
-    // Tüm konum ve tag_count kayıtlarını al
+
     const result = await pool.query('SELECT * FROM location_tags');
 
     if (result.rows.length === 0) {

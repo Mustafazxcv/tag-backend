@@ -35,7 +35,7 @@ const loginAdmin = async (req, res) => {
     return res.status(400).send('Kullanıcı adı ve şifre gereklidir.');
   }
 
-  try {
+  try { 
     const result = await pool.query('SELECT * FROM admins WHERE username = $1', [username]);
 
     if (result.rows.length === 0) {
@@ -49,7 +49,7 @@ const loginAdmin = async (req, res) => {
       return res.status(401).send('Şifre yanlış.');
     }
 
-    const token = jwt.sign({ id: admin.id }, config.secret, { expiresIn: '1h' });
+    const token = jwt.sign({ id: admin.id }, config.secret);
 
     const ipAddress = req.ip || 'Bilinmeyen IP';
     await pool.query(

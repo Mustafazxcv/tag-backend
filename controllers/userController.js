@@ -8,7 +8,6 @@ const pool = new Pool(config.database);
 const registerUser = async (req, res) => {
   const { first_name, last_name, birth_date, email, phone_number } = req.body;
 
-  // Telefon numarası eksik
   if (!phone_number) {
     return res.status(400).send({
       error: true,
@@ -16,7 +15,6 @@ const registerUser = async (req, res) => {
     });
   }
 
-  // Diğer alanlar eksik
   if (!first_name || !last_name || !birth_date || !email) {
     return res.status(400).send({
       error: true,
@@ -33,7 +31,6 @@ const registerUser = async (req, res) => {
     });
   }
 
-  // E-posta doğrulama (örnek bir kontrol, daha gelişmiş doğrulamalar için regex kullanabilirsiniz)
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return res.status(400).send({
       error: true,
@@ -41,7 +38,6 @@ const registerUser = async (req, res) => {
     });
   }
 
-  // Doğum tarihi doğrulama
   if (isNaN(Date.parse(birth_date))) {
     return res.status(400).send({
       error: true,
@@ -50,6 +46,7 @@ const registerUser = async (req, res) => {
   }
 
   try {
+
     const result = await pool.query(
       `
       INSERT INTO users (first_name, last_name, birth_date, email, phone_number)
@@ -65,7 +62,6 @@ const registerUser = async (req, res) => {
       [first_name, last_name, birth_date, email, phone_number]
     );
 
-    // Kullanıcı oluşturulamadı veya güncellenemedi
     if (result.rows.length === 0) {
       return res.status(409).send({
         error: true,
@@ -73,16 +69,28 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Başarılı yanıt
+    const userId = result.rows[0].id;
+
+    const permissionResult = await pool.query(
+      'SELECT 1 FROM communication_permissions WHERE user_id = $1',
+      [userId]
+    );
+
+    if (permissionResult.rows.length === 0) {
+      await pool.query(
+        'INSERT INTO communication_permissions (user_id, email_permission, phone_permission, sms_permission) VALUES ($1, $2, $3, $4)',
+        [userId, false, false, false]
+      );
+    }
+
     res.status(201).send({
       success: true,
-      id: result.rows[0].id,
+      id: userId,
       message: `Kullanıcı başarıyla kaydedildi veya güncellendi.`,
     });
   } catch (err) {
     console.error(err);
 
-    // Veritabanı bağlantı hatası
     if (err.code === "ECONNREFUSED") {
       return res.status(500).send({
         error: true,
@@ -90,7 +98,6 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Tekrarlayan anahtar hatası
     if (err.code === "23505") {
       return res.status(409).send({
         error: true,
@@ -98,13 +105,13 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Genel hata
     res.status(500).send({
       error: true,
       message: "Kullanıcı kaydı sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
     });
   }
 };
+
 
 
 
@@ -126,7 +133,7 @@ const loginUser = async (req, res) => {
     }
 
     const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, phone_number: user.phone_number }, config.secret, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id, phone_number: user.phone_number }, config.secret);
 
     res.status(200).send({ auth: true, token });
   } catch (err) {
@@ -143,6 +150,7 @@ const updateUserInfo = async (req, res) => {
     const updates = [];
     const values = [];
     let counter = 1;
+
 
     if (first_name) {
       updates.push(`first_name = $${counter}`);
@@ -166,27 +174,32 @@ const updateUserInfo = async (req, res) => {
     }
 
     if (updates.length === 0) {
-      return res.status(400).send('Güncellenecek bir bilgi yok.');
+      return res.status(400).send({ error: 'Güncellenecek bir bilgi yok.' });
     }
 
     values.push(id);
 
-    const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${counter}`;
-    await pool.query(query, values);
+    const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${counter} RETURNING id`;
 
-    res.status(200).send('Kullanıcı bilgileri güncellendi.');
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).send({ error: 'Kullanıcı bulunamadı veya güncelleme yapılmadı.' });
+    }
+    res.status(200).send({ message: 'Başarıyla güncellendi', user_id: result.rows[0].id });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Kullanıcı bilgileri güncellenirken bir hata oluştu.');
+    res.status(500).send({ error: 'Kullanıcı bilgileri güncellenirken bir hata oluştu.' });
   }
 };
+
 
 const getUserInfo = async (req, res) => {
   try {
     const userId = req.user.id;
 
     const result = await pool.query(
-      'SELECT id, first_name, last_name, email, phone_number, created_at FROM users WHERE id = $1',
+      'SELECT id, first_name, last_name, email, birth_date, phone_number, created_at FROM users WHERE id = $1',
       [userId]
     );
 
