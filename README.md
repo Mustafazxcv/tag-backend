@@ -35,7 +35,7 @@ Body (JSON):
 Başarılı Yanıt:
 {
   "auth": true,
-  "token": "JWT_TOKEN_HERE"
+  "token": "JWT_TOKEN"
 }
 
 # Kullanıcı Bilgilerini Düzenleme Fonksiyonu
@@ -45,7 +45,7 @@ Endpoint: http://127.0.0.1:3000/api/users/update
 
 Headers:
 {
-  "Authorization": "Bearer JWT_TOKEN_HERE"
+  "Authorization": "Bearer JWT_TOKEN"
 }
 
 
@@ -109,7 +109,7 @@ Body (JSON):
 Response: 
 {
   "auth": true,
-  "token": "JWT_TOKEN_HERE"
+  "token": "JWT_TOKEN"
 }
 
 # Fatura Adresi Ekleme
